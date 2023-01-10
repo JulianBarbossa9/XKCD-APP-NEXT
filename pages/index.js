@@ -1,12 +1,15 @@
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "@next/font/google";
-import { Container, Card, Row, Text } from "@nextui-org/react";
+import { Container, Card, Row, Text, Grid } from "@nextui-org/react";
 import {Header} from "../components/Header.js";
+import fs from 'fs/promises'
+import Link from "next/link";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home() {
+export default function Home({latestComics}) {
   return (
     <>
       <Head>
@@ -19,21 +22,54 @@ export default function Home() {
       <Header />
 
       <main>
-        <Container>
-          <Card css={{ $$cardColor: "$colors$primary", mt: "$10"}}>
-            <Card.Body>
-              <Row justify="center" align="center">
-                <Text h6 size={15} color="white" css={{ m: 0 }}>
-                  NextUI gives you the best developer experience with all the
-                  features you need for building beautiful and modern websites
-                  and applications.
-                </Text>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Container>
+        <Text 
+          h2
+          size={60}
+          css={{
+            display:"flex",
+            justifyContent:"center",
+            mt: "30px",
+            textGradient: "45deg, $yellow600 -20%, $red600 100%",
+          }}
+          weight="bold"
+        >
+          Latest Comics 
+        </Text>
+        <Grid.Container justify="center" >
+        {
+          latestComics.map(comic => {
+            return (
+              <Grid xs={6}>
+                  <Link href={`/comic/${comic.id}`} key={comic.id}>
+                    <img src={comic.img} alt={comic.alt} />
+                </Link>
+              </Grid>
+            )
+          })
+        }
+        </Grid.Container>
       </main>
       
     </>
   );
+}
+
+export async function getStaticProps(context){
+  const files = await fs.readdir('./comics/')
+  const lastNineComics = files.slice(-9, files.length)
+
+  const promiseReadFiles = lastNineComics.map(async (file) => {
+    const content = await fs.readFile(`./comics/${file}`, 'utf8')
+    return JSON.parse(content)
+  })
+
+  const latestComics = await Promise.all(promiseReadFiles)
+  
+
+  return {
+    props: {
+      latestComics
+    }
+
+  }
 }
